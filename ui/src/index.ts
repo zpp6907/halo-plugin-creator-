@@ -1,23 +1,26 @@
 import { definePlugin } from "@halo-dev/console-shared";
-import HomeView from "./views/HomeView.vue";
+import HomeView from "./views/MyHomeView.vue";
 import { IconPlug } from "@halo-dev/components";
 import { markRaw } from "vue";
+import { BoxExtension } from "./extensions/mapnode";
 
 export default definePlugin({
-  components: {},
+  components: {
+  },
+  
   routes: [
     {
       parentName: "Root",
       route: {
-        path: "/example",
+        path: "/todo",
         name: "Example",
         component: HomeView,
         meta: {
-          title: "示例页面",
+          title: "TODO",
           searchable: true,
           menu: {
-            name: "示例页面",
-            group: "示例分组",
+            name: "地图相册",
+            group: "TODO",
             icon: markRaw(IconPlug),
             priority: 0,
           },
@@ -25,5 +28,9 @@ export default definePlugin({
       },
     },
   ],
-  extensionPoints: {},
+  extensionPoints: {
+    "default:editor:extension:create": () => {
+      return [BoxExtension];
+    }
+  }
 });
