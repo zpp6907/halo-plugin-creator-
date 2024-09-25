@@ -1,42 +1,135 @@
-export interface Metadata {
-  name: string;
-  labels?: {
-    [key: string]: string;
-  } | null;
-  annotations?: {
-    [key: string]: string;
-  } | null;
-  version?: number | null;
-  creationTimestamp?: string | null;
-  deletionTimestamp?: string | null;
+import type {
+  EditorState,
+  EditorView,
+  Node,
+  ResolvedPos,
+  Selection,
+  Slice,
+} from "@/tiptap/pm";
+import type { Editor, Range } from "@/tiptap/vue-3";
+import type { Component } from "vue";
+export interface ToolbarItem {
+  priority: number;
+  component: Component;
+  props: {
+    editor: Editor;
+    isActive: boolean;
+    disabled?: boolean;
+    icon?: Component;
+    title?: string;
+    action?: () => void;
+  };
+  children?: ToolbarItem[];
 }
 
-export interface TodoSpec {
+interface BubbleMenuProps {
+  pluginKey?: string;
+  editor?: Editor;
+  shouldShow: (props: {
+    editor: Editor;
+    state: EditorState;
+    node?: HTMLElement;
+    view?: EditorView;
+    oldState?: EditorState;
+    from?: number;
+    to?: number;
+  }) => boolean;
+  tippyOptions?: Record<string, unknown>;
+  getRenderContainer?: (node: HTMLElement) => HTMLElement;
+  defaultAnimation?: boolean;
+}
+
+export interface NodeBubbleMenu extends BubbleMenuProps {
+  component?: Component;
+  items?: BubbleItem[];
+}
+
+export interface BubbleItem {
+  priority: number;
+  component?: Component;
+  props?: {
+    isActive?: ({ editor }: { editor: Editor }) => boolean;
+    visible?: ({ editor }: { editor: Editor }) => boolean;
+    icon?: Component;
+    iconStyle?: string;
+    title?: string;
+    action?: ({ editor }: { editor: Editor }) => Component | void;
+  };
+}
+export interface ToolboxItem {
+  priority: number;
+  component: Component;
+  props: {
+    editor: Editor;
+    icon?: Component;
+    title?: string;
+    description?: string;
+    action?: () => void;
+  };
+}
+
+export interface ExtensionOptions {
+  getToolbarItems?: ({
+    editor,
+  }: {
+    editor: Editor;
+  }) => ToolbarItem | ToolbarItem[];
+
+  getCommandMenuItems?: () => CommandMenuItem | CommandMenuItem[];
+
+  getBubbleMenu?: ({ editor }: { editor: Editor }) => NodeBubbleMenu;
+
+  getToolboxItems?: ({
+    editor,
+  }: {
+    editor: Editor;
+  }) => ToolboxItem | ToolboxItem[];
+
+  getDraggable?: ({ editor }: { editor: Editor }) => DraggableItem | boolean;
+}
+
+export interface CommandMenuItem {
+  priority: number;
+  icon: Component;
   title: string;
-  done?: boolean;
+  keywords: string[];
+  command: ({ editor, range }: { editor: Editor; range: Range }) => void;
 }
 
-/**
- * 与自定义模型 Todo 对应
- */
-export interface Todo {
-  spec: TodoSpec;
-  apiVersion: "todo.plugin.halo.run/v1alpha1"; // apiVersion=自定义模型的 group/version
-  kind: "Todo"; // Todo 自定义模型中 @GVK 注解中的 kind
-  metadata: Metadata;
+export interface DragSelectionNode {
+  $pos?: ResolvedPos;
+  node?: Node;
+  el: HTMLElement;
+  nodeOffset?: number;
+  dragDomOffset?: {
+    x?: number;
+    y?: number;
+  };
 }
 
-/**
- * Todo 自定义模型生成 list API 所对应的类型
- */
-export interface TodoList {
-  page: number;
-  size: number;
-  total: number;
-  items: Array<Todo>;
-  first: boolean;
-  last: boolean;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  totalPages: number;
+export interface DraggableItem {
+  getRenderContainer?: ({
+    dom,
+    view,
+  }: {
+    dom: HTMLElement;
+    view: EditorView;
+  }) => DragSelectionNode;
+  handleDrop?: ({
+    view,
+    event,
+    slice,
+    insertPos,
+    node,
+    selection,
+  }: {
+    view: EditorView;
+    event: DragEvent;
+    slice: Slice;
+    insertPos: number;
+    node: Node;
+    selection: Selection;
+  }) => boolean | void;
+  // allow drag-and-drop query propagation downward
+  allowPropagationDownward?: boolean;
 }
